@@ -1,0 +1,95 @@
+Przypadki użycia:
+
+PRZYPADEK: PACJENT PROSI O RECEPTĘ
+Identyfikator: poprosORecepte()
+Nazwa: Prośba o receptę
+
+Opis: Przypadek, w którym pacjent jest zainteresownmy zdobyciem recepty na lek.
+
+Stan początkowy: Pacjent.liczbaRecept = x
+
+Stan końcowy: Pacjent.liczbaRecept = x+1 LUB Pacjent.liczbaRecept = x
+
+Aktorzy pierwszoplanowi: Pacjent
+Aktorzy drugoplanowi: Lekarz
+
+Podstawowy przebieg zdarzeń:
+- Pacjent wybiera lekarza
+- Pacjent prosi o wypisanie recepty na właściwy lek swojego lekarza
+- Pacjent zatwierdza i otrzymuje potwierdzenie zgłoszenia
+
+Alternatywny przebieg zdarzeń:
+W przypadku nieuzasadnionej lub błędnej prośby lekarz odmawia wypisania recepty. 
+- Pacjent wybiera lekarza
+- Pacjent prosi o wypisanie recepty na właściwy lek swojego lekarza
+- Pacjent nie otrzymuje recepty i dostaje komunikat zwrotny
+
+Wyjątki:
+- Jeśli pacjent nie zna lekarza może zostawić puste okno. Lekarz zostanie przypisany automatycznie.
+Prośba zostanie odrzucona jeżeli lekarzowi będzie brakować ważnych informacji o pacjencie.
+
+
+PRZYPADEK: LEKARZ WYPISUJE RECEPTĘ
+Identyfikator: wypiszRecepte() 
+Nazwa: Wypisanie recepty
+
+Opis: Przypadek, w którym lekarz otrzymuje prosbę pacjenta o wypisanie recepty
+
+Warunek wstępny: Pacjent wysłał prośbę
+
+Stan początkowy: Lekarz.prośbyORecepte.push_back()
+
+Stan końcowy: Lekarz.prośbyORecepte.pop()
+
+Aktorzy pierwszoplanowi: Lekarz
+Aktorzy drugoplanowi: Pacjent
+
+Podstawowy przebieg zdarzeń:
+- Lekarz otwiera prośbę pacjenta i czyta opis zgłoszenia
+- Lekarz zgadza się i wypisuje receptę do pacjenta
+- Lekarz zatwierdza, a recepta zostaje wysłana pacjentowi
+
+Alternatywny przebieg zdarzeń:
+W przypadku nieuzasadnionej lub błędnej prośby lekarz odmawia wypisania recepty. 
+- Lekarz otwiera prośbę pacjenta i czyta opis zgłoszenia
+- Lekarz nie zgadza się i nie wypisuje receptę do pacjenta
+- Lekarz wysyła komunikat zwrotny pajcentowi
+
+Wyjątki:
+- Lekarzowi brakuje informacji o pacjencie (historii medycznej, dokumentacji o poprzednich lekach).
+Lekarz powinien odrzucić z uzasadnieniem i zachęcić do wizyty osobistej.
+
+
+PRZYPADEK: FARMACEUTA WYDAJE LEK NA RECEPTĘ
+Identyfikator: wydajLek()
+Nazwa: Wydanie leku
+
+Opis: Przypadek, w którym farmaceuta otrzymuje kod recepty, za którą wydaje lek pacjentowi
+
+Stan początkowy: Recepta.stan = aktywny LUB Recepta.stan = przeterminowany
+
+Stan końcowy: Recepta.stan = nieakywny LUB Recepta.ilosc -= Lek.ilosc LUB Recepta.stan = przeterminowany 
+
+Aktorzy pierwszoplanowi: Farmaceuta 
+Aktorzy drugoplanowi: Pacjent
+
+Podstawowy przebieg zdarzeń:
+- Farmaceuta wpisuje kod recepty
+- Farmaceuta wyświetla dane recepty
+- Farmaceuta wydaje lek z recepty do zakupu i akceptuje
+
+Alternatywne przebiegi zdarzeń:
+1. jeśli recepta zawiera błąd albo jest nieaktualna (jej data ważności minęła) farmaceuta kończy akcję na 2. punkcie
+- Farmaceuta wpisuje kod recepty
+- Farmaceuta wyświetla dane recepty
+- Farmaceuta nie wydaje lek z recepty i informuje pacjenta
+
+2. jeśli leku z recepty nie ma w aptece farmaceuta wydaje tylko część leków albo kończy akcję na 2. punkcie
+- Farmaceuta wpisuje kod recepty
+- Farmaceuta wyświetla dane recepty
+- Farmaceuta nie wydaje lek LUB wydaje mniejszą iłość, recepta zostaje aktywna
+
+Wyjątki:
+- Pacjent nie ma dostępu do kodu recepty.
+Pacjent powinien pokazać receptę na swoim urządzeniu albo wydrukowaną na papierze.
+W innym przypadku pacjent musi podać swoje dane osobiste (imie, nazwisko, nr telefonu).

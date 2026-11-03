@@ -1,0 +1,26 @@
+# Local settings and credentials
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+# Generated files
+build/
+target/
+out/
+.gradle/
+node_modules/
+.angular/
+dist/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.class
+*.log
+*.db
+*.sqlite
+*.sqlite3
+*.csv
