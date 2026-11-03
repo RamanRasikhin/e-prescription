@@ -13,6 +13,7 @@ public class MagazynDAO {
     }
 
     public void dodajLekDoMagazynu(int lekId, int ilosc) {
+        if (ilosc <= 0) throw new IllegalArgumentException("Quantity must be positive");
         String sqlCheck = "SELECT ilosc FROM magazyn WHERE lek_id = ?";
         String sqlUpdate = "UPDATE magazyn SET ilosc = ilosc + ? WHERE lek_id = ?";
         String sqlInsert = "INSERT INTO magazyn (lek_id, ilosc) VALUES (?, ?)";
@@ -45,31 +46,18 @@ public class MagazynDAO {
     }
 
     public boolean pobierzLek(int lekId, int wymaganaIlosc) {
-        String sqlCheck = "SELECT ilosc FROM magazyn WHERE lek_id = ?";
-        String sqlUpdate = "UPDATE magazyn SET ilosc = ilosc - ? WHERE lek_id = ?";
-
-        try (Connection conn = dbHandler.getDbConnection()) {
-            int obecnaIlosc = 0;
-            try (PreparedStatement psCheck = conn.prepareStatement(sqlCheck)) {
-                psCheck.setInt(1, lekId);
-                ResultSet rs = psCheck.executeQuery();
-                if (rs.next()) {
-                    obecnaIlosc = rs.getInt("ilosc");
-                }
-            }
-
-            if (obecnaIlosc >= wymaganaIlosc) {
-                try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
-                    psUpdate.setInt(1, wymaganaIlosc);
-                    psUpdate.setInt(2, lekId);
-                    psUpdate.executeUpdate();
-                    return true;
-                }
-            }
+        if (wymaganaIlosc <= 0) return false;
+        String sql = "UPDATE magazyn SET ilosc = ilosc - ? WHERE lek_id = ? AND ilosc >= ?";
+        try (Connection conn = dbHandler.getDbConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, wymaganaIlosc);
+            ps.setInt(2, lekId);
+            ps.setInt(3, wymaganaIlosc);
+            return ps.executeUpdate() == 1;
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
     public List<LekMagazynView> pobierzLekiZMagazynu() {
@@ -115,42 +103,6 @@ public class MagazynDAO {
     }
 
     public boolean wydajLek(int lekId, int ilosc) {
-        String sqlCheck = "SELECT ilosc FROM magazyn WHERE lek_id = ?";
-        String sqlUpdate = "UPDATE magazyn SET ilosc = ilosc - ? WHERE lek_id = ?";
-
-        try (Connection conn = dbHandler.getDbConnection()) {
-            conn.setAutoCommit(false);
-
-            int stan;
-
-            try (PreparedStatement ps = conn.prepareStatement(sqlCheck)) {
-                ps.setInt(1, lekId);
-                ResultSet rs = ps.executeQuery();
-                if (!rs.next()) {
-                    conn.rollback();
-                    return false;
-                }
-                stan = rs.getInt("ilosc");
-            }
-
-            if (stan < ilosc) {
-                conn.rollback();
-                return false;
-            }
-
-            try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
-                ps.setInt(1, ilosc);
-                ps.setInt(2, lekId);
-                ps.executeUpdate();
-            }
-
-            conn.commit();
-            return true;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+        return pobierzLek(lekId, ilosc);
     }
-
 }

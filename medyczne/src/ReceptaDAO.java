@@ -71,8 +71,6 @@ public class ReceptaDAO {
     public List<ReceptaView> getReceptyPacjenta(int pacjentId) {
         List<ReceptaView> lista = new ArrayList<>();
 
-        // DEBUG
-        System.out.println("DEBUG getReceptyPacjenta: pacjentId = " + pacjentId);
 
         String sql = """
     SELECT r.kod_recepty,
@@ -91,19 +89,15 @@ public class ReceptaDAO {
             ps.setInt(1, pacjentId);
             ResultSet rs = ps.executeQuery();
 
-            int count = 0;
             while (rs.next()) {
-                count++;
                 lista.add(new ReceptaView(
                         rs.getInt("kod_recepty"),
                         rs.getString("data_waznosci"),
                         rs.getString("status"),
                         rs.getInt("liczbaLekow")
                 ));
-                System.out.println("  Znaleziono receptę: " + rs.getInt("kod_recepty"));
             }
 
-            System.out.println("  Łącznie recept: " + count);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -328,6 +322,54 @@ public class ReceptaDAO {
         return map;
     }
 
+
+    /** Dispense a complete prescription atomically; partial fulfillment is unsupported. */
+    public boolean zrealizujRecepte(int kod) {
+        try (Connection conn = dbHandler.getDbConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT status, data_waznosci FROM recepta WHERE kod_recepty = ?")) {
+                    ps.setInt(1, kod);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next() || !"AKTYWNA".equals(rs.getString("status")) ||
+                                LocalDate.parse(rs.getString("data_waznosci")).isBefore(LocalDate.now())) {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+                Map<Integer, Integer> quantities = new HashMap<>();
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT lek_id, COUNT(*) AS quantity FROM recepta_lek WHERE kod_recepty = ? GROUP BY lek_id")) {
+                    ps.setInt(1, kod);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) quantities.put(rs.getInt("lek_id"), rs.getInt("quantity"));
+                    }
+                }
+                if (quantities.isEmpty()) { conn.rollback(); return false; }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE magazyn SET ilosc = ilosc - ? WHERE lek_id = ? AND ilosc >= ?")) {
+                    for (Map.Entry<Integer, Integer> item : quantities.entrySet()) {
+                        ps.setInt(1, item.getValue()); ps.setInt(2, item.getKey()); ps.setInt(3, item.getValue());
+                        if (ps.executeUpdate() != 1) { conn.rollback(); return false; }
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE recepta SET status = 'ZREALIZOWANA' WHERE kod_recepty = ? AND status = 'AKTYWNA'")) {
+                    ps.setInt(1, kod);
+                    if (ps.executeUpdate() != 1) { conn.rollback(); return false; }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException | RuntimeException e) {
+                conn.rollback();
+                return false;
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+    }
 
     public void uniewaznijRecepte(int kod) {
         zaktualizujStatus(kod, "ANULOWANA");

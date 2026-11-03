@@ -329,8 +329,7 @@ public class  Main extends Application {
                 createRealizacjaRecepty(stage, kod);
 
 
-                // ✅ WSZYSTKO OK → REALIZACJA
-                createRealizacjaRecepty(stage, kod);
+
 
             } catch (NumberFormatException ex) {
                 wynikLabel.setText("⚠️ Nieprawidłowy kod");
@@ -562,23 +561,14 @@ public class  Main extends Application {
         Button realizujBtn = new Button("Zrealizuj");
         realizujBtn.setOnAction(e -> {
 
-            for (LekRealizacjaRow row : table.getItems()) {
-                if (row.isWydac()) {
-                    boolean success = magazynDAO.wydajLek(
-                            row.getLek().getId(),
-                            row.getIloscNaRecepcie()
-                    );
-
-                    if (!success) {
-                        new Alert(Alert.AlertType.ERROR,
-                                "Brak leku: " + row.getNazwa())
-                                .showAndWait();
-                        return;
-                    }
-                }
+            if (table.getItems().isEmpty() || table.getItems().stream().anyMatch(row -> !row.isWydac())) {
+                new Alert(Alert.AlertType.WARNING, "Wybierz wszystkie leki, aby zrealizowac cala recepte.").showAndWait();
+                return;
             }
-
-            receptaDAO.zaktualizujStatus(kodRecepty, "ZREALIZOWANA");
+            if (!receptaDAO.zrealizujRecepte(kodRecepty)) {
+                new Alert(Alert.AlertType.ERROR, "Nie mozna zrealizowac recepty. Sprawdz status, waznosc i stan magazynu.").showAndWait();
+                return;
+            }
             stage.close();
         });
 

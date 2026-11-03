@@ -2,14 +2,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class AuthService {
 
-    private final Map<String, UserSession> activeSessions = new HashMap<>();
-    private final DatabaseHandler dbHandler = new DatabaseHandler();
+    private final Map<String, UserSession> activeSessions = new ConcurrentHashMap<>();
+    private final DatabaseHandler dbHandler;
+
+    public AuthService() { this(new DatabaseHandler()); }
+
+    public AuthService(DatabaseHandler dbHandler) { this.dbHandler = dbHandler; }
 
     public static class UserSession {
         public final int userId;

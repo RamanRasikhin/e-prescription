@@ -4,10 +4,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseHandler {
-    private static final String CONNECTION_STRING = "jdbc:sqlite:apteka.db";
+    private final String connectionString;
+
+    public DatabaseHandler() {
+        this(System.getProperty("recepty.db", "apteka.db"));
+    }
+
+    public DatabaseHandler(String databaseFile) {
+        this.connectionString = "jdbc:sqlite:" + databaseFile;
+    }
 
     public Connection getDbConnection() throws SQLException {
-        return DriverManager.getConnection(CONNECTION_STRING);
+        return DriverManager.getConnection(connectionString);
     }
 
     public void createTables() {

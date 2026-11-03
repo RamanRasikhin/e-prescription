@@ -2,7 +2,7 @@
 
 A university team prototype for issuing prescriptions, viewing prescription history and dispensing medication.
 
-I participated in the team project. Individual component ownership has not been reconstructed, so this repository does not attribute the entire implementation to me.
+Developed as a university team project; I was one of the contributors.
 
 ## Features
 
@@ -13,14 +13,14 @@ I participated in the team project. Individual component ownership has not been 
 
 ## Stack
 
-Java · JavaFX · SQLite/JDBC · Gson · NanoHTTPD
+Java В· JavaFX В· SQLite/JDBC В· Gson В· NanoHTTPD
 
 ## Run
 
-A Maven configuration has been added to replace machine-specific IDE library paths. Use JDK 17 and Maven:
+Requires JDK 17 and Maven:
 
 ```powershell
-mvn compile
+mvn test
 mvn javafx:run
 ```
 
@@ -32,7 +32,9 @@ mvn compile exec:java -Dexec.mainClass=ServerAPI
 
 The server listens on port 8080 and creates demo records on startup. Run it with a fresh local database when evaluating it; repeated startup is not a migration or production seeding mechanism. The GUI and server are separate entry points, not a confirmed client/server integration.
 
-The database file is `apteka.db` in the working directory. Existing database files have been excluded from this copy. `OldMainTest` is a manual demonstration program, not an automated test suite. All Java sources compiled locally using JDK 17, cached JavaFX 17.0.6 and the archived dependency jars. The new Maven configuration uses JavaFX 17.0.12; its dependency resolution and GUI/API startup have not yet been validated.
+The database file is `apteka.db` in the working directory. It is created automatically and is excluded from Git. Desktop demo logins are `lekarz`, `pacjent` and `farmaceuta`, with password `pass1`; HTTP demo logins are `doc1`, `pat1` and `apt1`, with the same demo password.
+
+`mvn test` resolves the declared dependencies, compiles the application and runs eight integration tests against temporary SQLite databases. They cover issuing and viewing prescriptions, stock quantities, atomic fulfillment and rollback, expiry, duplicate fulfillment and role sessions. `OldMainTest` is a separate manual demo for a fresh database. Desktop screen construction and the HTTP login/issue/history/fulfillment flow are checked separately; the complete GUI has not been tested end to end.
 
 ## Design materials
 

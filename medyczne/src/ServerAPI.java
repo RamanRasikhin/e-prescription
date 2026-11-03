@@ -41,7 +41,7 @@ public class ServerAPI extends NanoHTTPD {
         Farmaceuta farmaceuta = new Farmaceuta(0, "Piotr", "Wisniewski", "apt1", "pass1", LocalDate.of(1975, 12, 12), 1);
         userDAO.zapiszFarmaceute(farmaceuta);
 
-        Lek lek = new Lek(0, "Apap", RodzajLeku.TABLETKI, "Bol glowy", LocalDate.of(2025, 10, 10));
+        Lek lek = new Lek(0, "Apap", RodzajLeku.TABLETKI, "Bol glowy", LocalDate.now().plusYears(1));
         lekDAO.zapiszLek(lek);
         magDAO.dodajLekDoMagazynu(1, 100);
 
@@ -159,22 +159,9 @@ public class ServerAPI extends NanoHTTPD {
                     return newJsonResponce(Response.Status.BAD_REQUEST, "Invalid prescription status");
                 }
 
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> leki = (List<Map<String, Object>>) rCheck.get("leki");
-
-                for(Map<String, Object> l : leki) {
-                    int lekId = (int) l.get("id");
-                    int stan = magazynDAO.sprawdzStan(lekId);
-                    if (stan < 1) {
-                        return newJsonResponce(Response.Status.BAD_REQUEST, "Out of stock: " + l.get("nazwa"));
-                    }
+                if (!receptaDAO.zrealizujRecepte(kod)) {
+                    return newJsonResponce(Response.Status.BAD_REQUEST, "Cannot fulfill prescription: check stock, status and expiry");
                 }
-
-                for(Map<String, Object> l : leki) {
-                    magazynDAO.pobierzLek((int) l.get("id"), 1);
-                }
-
-                receptaDAO.zaktualizujStatus(kod, "ZREALIZOWANA");
 
                 return newJsonResponce(Response.Status.OK, "Prescription realized");
 
